@@ -782,6 +782,11 @@
   MdeModulePkg/Universal/Acpi/BootGraphicsResourceTableDxe/BootGraphicsResourceTableDxe.inf
 
   #
+  # Apple HFS+ Support
+  #
+  OvmfPkg/FswHfsPlus/FswHfsPlus.inf
+
+  #
   # Network Support
   #
   MdeModulePkg/Universal/Network/SnpDxe/SnpDxe.inf
