@@ -165,16 +165,30 @@ fsw_hfsplus_dno_free(struct fsw_hfsplus_volume *v, struct fsw_hfsplus_dnode *d)
     return;
 }
 
+/* HFS+ to Posix timestamp conversion
+ */
+static fsw_u32
+fsw_hfsplus_posix_time(fsw_u32 t)
+{
+    // t is in seconds since midnight, January 1, 1904, GMT
+    return (t > 2082844800) ? t - 2082844800 : 0;
+}
+
 /* Get in-depth dnode information. The core ensures fsw_hfsplus_dno_fill()
  * has been called on the dnode before this function is called. Note that some
  * data is not directly stored into the structure, but passed to a host-specific
  * callback that converts it to the host-specific format.
  */
 static fsw_status_t
-fsw_hfsplus_dno_stat(struct fsw_hfsplus_volume *v, struct fsw_hfsplus_dnode  *d,
+fsw_hfsplus_dno_stat(struct fsw_hfsplus_volume *v, struct fsw_hfsplus_dnode *d,
                      struct fsw_dnode_stat *s)
 {
-    // FIXME: not yet supported!
+    s->used_bytes = d->g.size;
+    s->store_attr_posix(s, 0500);
+    s->store_time_posix(s, FSW_DNODE_STAT_CTIME, fsw_hfsplus_posix_time(d->ct));
+    s->store_time_posix(s, FSW_DNODE_STAT_MTIME, fsw_hfsplus_posix_time(d->mt));
+    s->store_time_posix(s, FSW_DNODE_STAT_ATIME, fsw_hfsplus_posix_time(d->at));
+
     return FSW_SUCCESS;
 }
 
@@ -437,7 +451,6 @@ fsw_hfsplus_dir_get(struct fsw_hfsplus_volume *v, struct fsw_hfsplus_dnode *d,
                     struct fsw_string *name, struct fsw_hfsplus_dnode **d_out)
 {
     BTNodeDescriptor     *btnode;
-    fsw_s16              child_rec_type;
     fsw_u32              child_dno_id, child_dno_type;
     HFSPlusCatalogKey    k;
     HFSPlusCatalogRecord *rec;
@@ -466,27 +479,47 @@ fsw_hfsplus_dir_get(struct fsw_hfsplus_volume *v, struct fsw_hfsplus_dnode *d,
         goto done;
 
     // child record immediately follows the record key data:
-    child_rec_type = fsw_u16_be_swap(rec->recordType);
-    if (child_rec_type == kHFSPlusFolderRecord) {
+    switch(fsw_u16_be_swap(rec->recordType)) {
+    case kHFSPlusFolderRecord:
         child_dno_id = fsw_u32_be_swap(rec->folderRecord.folderID);
         child_dno_type = FSW_DNODE_TYPE_DIR;
-    } else if (child_rec_type == kHFSPlusFileRecord) {
+        break;
+    case kHFSPlusFileRecord:
         child_dno_id = fsw_u32_be_swap(rec->fileRecord.fileID);
         child_dno_type = FSW_DNODE_TYPE_FILE;
-    } else {
+        break;
+    default:
         child_dno_id = 0;
         child_dno_type = FSW_DNODE_TYPE_UNKNOWN;
+        break;
     }
+
+    // allocate child dnode:
     status = fsw_dnode_create(d, child_dno_id, child_dno_type, name, d_out);
     if (status)
         goto done;
 
-    // if child node is a file, set size and initial extents:
-    if (child_rec_type == kHFSPlusFileRecord) {
+    // grab additional child dnode status data:
+    switch(child_dno_type) {
+    case FSW_DNODE_TYPE_DIR:
+        (*d_out)->ct = fsw_u32_be_swap(rec->folderRecord.createDate);
+        (*d_out)->mt = fsw_u32_be_swap(rec->folderRecord.contentModDate);
+        (*d_out)->at = fsw_u32_be_swap(rec->folderRecord.accessDate);
+        break;
+    case FSW_DNODE_TYPE_FILE:
         (*d_out)->g.size =
             fsw_u64_be_swap(rec->fileRecord.dataFork.logicalSize);
         fsw_memcpy((*d_out)->extents, &rec->fileRecord.dataFork.extents,
                    sizeof(HFSPlusExtentRecord));
+        (*d_out)->ct = fsw_u32_be_swap(rec->fileRecord.createDate);
+        (*d_out)->mt = fsw_u32_be_swap(rec->fileRecord.contentModDate);
+        (*d_out)->at = fsw_u32_be_swap(rec->fileRecord.accessDate);
+        break;
+    default:
+        (*d_out)->ct = 0;
+        (*d_out)->mt = 0;
+        (*d_out)->at = 0;
+        break;
     }
 
 done:

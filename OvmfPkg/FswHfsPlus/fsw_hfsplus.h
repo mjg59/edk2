@@ -222,6 +222,7 @@ typedef union {
 // FSW: HFS+ specific dnode
 struct fsw_hfsplus_dnode {
     struct fsw_dnode g;             // Generic (parent) dnode structure
+    fsw_u32 ct, mt, at;             // HFS+ create/modify/access timestamps
     HFSPlusExtentRecord extents;    // HFS+ initial extent record
     fsw_u32 bt_root;                // root node index (if B-Tree file)
     fsw_u16 bt_ndsz;                // node size (if B-Tree file)
