@@ -41,6 +41,7 @@
   SecurityPkg/SecurityPkg.dec
 
 [LibraryClasses]
+  AppleSupportLib
   BaseLib
   MemoryAllocationLib
   UefiBootServicesTableLib

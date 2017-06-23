@@ -389,6 +389,11 @@ PlatformBootManagerBeforeConsole (
   }
 
   //
+  // Initialize AppleSupport library
+  //
+  InitializeAppleSupport (gImageHandle, gST);
+
+  //
   // Prevent further changes to LockBoxes or SMRAM.
   //
   Handle = NULL;
@@ -1542,6 +1547,11 @@ PlatformBootManagerAfterConsole (
 
   RemoveStaleFvFileOptions ();
   SetBootOrderFromQemu ();
+
+  //
+  // Locate and launch apple's OS X bootloader
+  //
+  BdsBootApple ();
 }
 
 /**

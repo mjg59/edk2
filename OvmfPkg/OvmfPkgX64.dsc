@@ -218,6 +218,8 @@
   Tcg2PhysicalPresenceLib|OvmfPkg/Library/Tcg2PhysicalPresenceLibNull/DxeTcg2PhysicalPresenceLib.inf
 !endif
 
+  AppleSupportLib|OvmfPkg/Library/AppleSupportLib/AppleSupportLib.inf
+
 [LibraryClasses.common]
   BaseCryptLib|CryptoPkg/Library/BaseCryptLib/BaseCryptLib.inf
 
@@ -783,6 +785,7 @@
   # Apple HFS+ Support
   #
   OvmfPkg/FswHfsPlus/FswHfsPlus.inf
+  IntelFrameworkModulePkg/Universal/DataHubDxe/DataHubDxe.inf
 
   #
   # Network Support
