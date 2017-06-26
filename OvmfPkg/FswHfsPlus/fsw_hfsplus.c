@@ -139,8 +139,12 @@ fsw_hfsplus_vol_free(struct fsw_hfsplus_volume *v)
 static fsw_status_t
 fsw_hfsplus_vol_stat(struct fsw_hfsplus_volume *v, struct fsw_volume_stat *s)
 {
-    // FIXME: not yet supported!
-    return FSW_UNSUPPORTED;
+    fsw_u32 bs = fsw_u32_be_swap(v->vh->blockSize);
+
+    s->total_bytes = bs * fsw_u32_be_swap(v->vh->totalBlocks);
+    s->free_bytes = bs * fsw_u32_be_swap(v->vh->freeBlocks);
+
+    return FSW_SUCCESS;
 }
 
 /* Get full information on a dnode from disk. This function is called by
