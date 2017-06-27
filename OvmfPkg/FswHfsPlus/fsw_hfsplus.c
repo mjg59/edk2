@@ -234,7 +234,9 @@ typedef int (*k_cmp_t)(HFSPlusBTKey*, HFSPlusBTKey*);
 /* Search an HFS+ special file's B-Tree (given by 'bt'), for a search key
  * matching 'sk', using comparison procedure 'k_cmp' to determine when a key
  * match occurs; Fill a caller-provided B-Tree node buffer ('btnode'), and
- * return a pointer to the matching record data inside 'btnode' via 'data_ptr';
+ * return a pointer to the trial key of the matching record inside 'btnode',
+ * via 'tk_ptr' (NOTE: unlike the search key, the trial key's fields will be
+ * returned in unmodified, BigEndian encoding);
  * On error, set fsw_status_t return code acoordingly.
  *
  * NOTE: A HFS+ volume has a few "special" files, linked directly from the
@@ -256,7 +258,7 @@ typedef int (*k_cmp_t)(HFSPlusBTKey*, HFSPlusBTKey*);
 static fsw_status_t
 fsw_hfsplus_bt_search(struct fsw_hfsplus_dnode *bt,
                       HFSPlusBTKey *sk, k_cmp_t k_cmp,
-                      BTNodeDescriptor *btnode, void **data_ptr)
+                      BTNodeDescriptor *btnode, HFSPlusBTKey **tk_ptr)
 {
     fsw_u32      node;
     fsw_u16      rec, lo, hi;
@@ -297,8 +299,8 @@ fsw_hfsplus_bt_search(struct fsw_hfsplus_dnode *bt,
                      hi = rec;
                      break;
                  }
-                 // success: return pointer to data immediately past trial key
-                 *data_ptr = fsw_hfsplus_bt_rec_skip_key(tk);
+                 // success: return pointer to trial key (within btnode)
+                 *tk_ptr = tk;
                  return FSW_SUCCESS;
              }
         }
@@ -456,13 +458,13 @@ fsw_hfsplus_dir_get(struct fsw_hfsplus_volume *v, struct fsw_hfsplus_dnode *d,
 {
     BTNodeDescriptor     *btnode;
     fsw_u32              child_dno_id, child_dno_type;
-    HFSPlusCatalogKey    k;
+    HFSPlusCatalogKey    sk, *tk;
     HFSPlusCatalogRecord *rec;
     fsw_status_t         status;
 
     // we only support FSW_STRING_TYPE_UTF16 names:
     if (name->type != FSW_STRING_TYPE_UTF16 ||
-        name->size > sizeof(k.nodeName.unicode))
+        name->size > sizeof(sk.nodeName.unicode))
         return FSW_UNSUPPORTED;
 
     // pre-allocate bt-node buffer for use by search function:
@@ -471,16 +473,18 @@ fsw_hfsplus_dir_get(struct fsw_hfsplus_volume *v, struct fsw_hfsplus_dnode *d,
         return status;
 
     // search catalog file for child named by 'name':
-    k.parentID = d->g.dnode_id;
-    k.nodeName.length = name->len;
-    fsw_memcpy(k.nodeName.unicode, name->data, name->size);
+    sk.parentID = d->g.dnode_id;
+    sk.nodeName.length = name->len;
+    fsw_memcpy(sk.nodeName.unicode, name->data, name->size);
     // NOTE: keyLength not used in search, setting only for completeness:
-    k.keyLength = sizeof(k.parentID) + sizeof(k.nodeName.length) + name->size;
+    sk.keyLength = sizeof(sk.parentID) +
+                   sizeof(sk.nodeName.length) + name->size;
     status = fsw_hfsplus_bt_search(v->catf,
-                                   (HFSPlusBTKey *)&k, fsw_hfsplus_cat_cmp,
-                                   btnode, (void **)&rec);
+                                   (HFSPlusBTKey *)&sk, fsw_hfsplus_cat_cmp,
+                                   btnode, (HFSPlusBTKey **)&tk);
     if (status)
         goto done;
+    rec = fsw_hfsplus_bt_rec_skip_key((HFSPlusBTKey *)tk);
 
     // child record immediately follows the record key data:
     switch(fsw_u16_be_swap(rec->recordType)) {
