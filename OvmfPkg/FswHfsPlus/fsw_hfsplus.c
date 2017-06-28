@@ -233,9 +233,11 @@ typedef int (*k_cmp_t)(HFSPlusBTKey*, HFSPlusBTKey*);
 
 /* Search an HFS+ special file's B-Tree (given by 'bt'), for a search key
  * matching 'sk', using comparison procedure 'k_cmp' to determine when a key
- * match occurs; Fill a caller-provided B-Tree node buffer ('btnode'), and
- * return a pointer to the trial key of the matching record inside 'btnode',
- * via 'tk_ptr' (NOTE: unlike the search key, the trial key's fields will be
+ * match occurs; Once found, skip over 'rec_skip' contiguous records
+ * (following the enveloping nodes' 'fLink' pointers if necessary). Finish
+ * by filling a caller-provided B-Tree node buffer ('btnode'), and returning
+ * a pointer to the trial key of the matching record inside 'btnode', via
+ * 'tk_ptr' (NOTE: unlike the search key, the trial key's fields will be
  * returned in unmodified, BigEndian encoding);
  * On error, set fsw_status_t return code acoordingly.
  *
@@ -257,7 +259,7 @@ typedef int (*k_cmp_t)(HFSPlusBTKey*, HFSPlusBTKey*);
  */
 static fsw_status_t
 fsw_hfsplus_bt_search(struct fsw_hfsplus_dnode *bt,
-                      HFSPlusBTKey *sk, k_cmp_t k_cmp,
+                      HFSPlusBTKey *sk, k_cmp_t k_cmp, fsw_u64 rec_skip,
                       BTNodeDescriptor *btnode, HFSPlusBTKey **tk_ptr)
 {
     fsw_u32      node;
@@ -298,6 +300,31 @@ fsw_hfsplus_bt_search(struct fsw_hfsplus_dnode *bt,
                  if (btnode->kind != kBTLeafNode) {
                      hi = rec;
                      break;
+                 }
+                 // found original 'sk'; fast-forward past 'rec_skip' records
+                 if (rec_skip > 0) {
+
+// FIXME: clean this up, refactor to make it elegant!
+    while (rec_skip >= fsw_u16_be_swap(btnode->numRecords) - rec) {
+        fsw_u32 fl = fsw_u32_be_swap(btnode->fLink);
+        rec_skip -= fsw_u16_be_swap(btnode->numRecords) - rec;
+        rec = 0;
+        if (fl == 0)
+            return FSW_NOT_FOUND;
+
+        status = fsw_hfsplus_read(bt, (fsw_u64)fl * bt->bt_ndsz,
+                                  bt->bt_ndsz, btnode);
+        if (status)
+            return status;
+
+        // sanity check: record 0 located immediately after node descriptor
+        if ((void *)btnode + sizeof(BTNodeDescriptor) !=
+            (void *)fsw_hfsplus_bt_get_rec(btnode, bt->bt_ndsz, 0))
+            return FSW_VOLUME_CORRUPTED;
+    }
+    rec = rec_skip;
+    tk = fsw_hfsplus_bt_get_rec(btnode, bt->bt_ndsz, rec);
+
                  }
                  // success: return pointer to trial key (within btnode)
                  *tk_ptr = tk;
@@ -443,6 +470,7 @@ fsw_hfsplus_get_ext(struct fsw_hfsplus_volume *v, struct fsw_hfsplus_dnode *d,
     }
 
     // FIXME: more than 8 fragments not yet supported!
+DEBUG ((EFI_D_INFO, "GLS: get_ext: got here\n"));
     return FSW_UNSUPPORTED;
 }
 
@@ -462,6 +490,11 @@ fsw_hfsplus_dir_get(struct fsw_hfsplus_volume *v, struct fsw_hfsplus_dnode *d,
     HFSPlusCatalogRecord *rec;
     fsw_status_t         status;
 
+int i;
+DEBUG ((EFI_D_INFO, "GLS: dir_get: parent=%d name: ", d->g.dnode_id));
+for (i = 0; i < name->len; i++)
+  DEBUG((EFI_D_INFO, "%c", ((fsw_u16 *)name->data)[i]));
+DEBUG((EFI_D_INFO, "\n"));
     // we only support FSW_STRING_TYPE_UTF16 names:
     if (name->type != FSW_STRING_TYPE_UTF16 ||
         name->size > sizeof(sk.nodeName.unicode))
@@ -481,13 +514,14 @@ fsw_hfsplus_dir_get(struct fsw_hfsplus_volume *v, struct fsw_hfsplus_dnode *d,
                    sizeof(sk.nodeName.length) + name->size;
     status = fsw_hfsplus_bt_search(v->catf,
                                    (HFSPlusBTKey *)&sk, fsw_hfsplus_cat_cmp,
+                                   0,
                                    btnode, (HFSPlusBTKey **)&tk);
     if (status)
         goto done;
     rec = fsw_hfsplus_bt_rec_skip_key((HFSPlusBTKey *)tk);
 
-    // child record immediately follows the record key data:
-    switch(fsw_u16_be_swap(rec->recordType)) {
+    // figure out type of child dnode:
+    switch (fsw_u16_be_swap(rec->recordType)) {
     case kHFSPlusFolderRecord:
         child_dno_id = fsw_u32_be_swap(rec->folderRecord.folderID);
         child_dno_type = FSW_DNODE_TYPE_DIR;
@@ -508,7 +542,7 @@ fsw_hfsplus_dir_get(struct fsw_hfsplus_volume *v, struct fsw_hfsplus_dnode *d,
         goto done;
 
     // grab additional child dnode status data:
-    switch(child_dno_type) {
+    switch (child_dno_type) {
     case FSW_DNODE_TYPE_DIR:
         (*d_out)->ct = fsw_u32_be_swap(rec->folderRecord.createDate);
         (*d_out)->mt = fsw_u32_be_swap(rec->folderRecord.contentModDate);
@@ -546,8 +580,114 @@ static fsw_status_t
 fsw_hfsplus_dir_read(struct fsw_hfsplus_volume *v, struct fsw_hfsplus_dnode *d,
                      struct fsw_shandle *sh, struct fsw_hfsplus_dnode **d_out)
 {
-    // FIXME: not yet supported!
-    return FSW_UNSUPPORTED;
+// FIXME: can we factor out common bits shared with dir_get() ?
+    BTNodeDescriptor     *btnode;
+    fsw_u32              child_dno_id, child_dno_type;
+    HFSPlusCatalogKey    sk, *tk;
+    HFSPlusCatalogRecord *rec;
+    struct fsw_string    name;
+    int                  i;
+    fsw_status_t         status;
+
+DEBUG ((EFI_D_INFO, "GLS: dir_read.1: sh->pos=%ld\n", sh->pos));
+    // pre-allocate bt-node buffer for use by search function:
+    status = fsw_alloc(v->catf->bt_ndsz, &btnode);
+    if (status)
+        return status;
+
+    // search catalog file for first child of 'd' (a.k.a. "./"):
+    sk.parentID = d->g.dnode_id;
+    sk.nodeName.length = 0;
+    // NOTE: keyLength not used in search, setting only for completeness:
+
+    sk.keyLength = sizeof(sk.parentID) + sizeof(sk.nodeName.length);
+    status = fsw_hfsplus_bt_search(v->catf,
+                                   (HFSPlusBTKey *)&sk, fsw_hfsplus_cat_cmp,
+                                   sh->pos,
+                                   btnode, (HFSPlusBTKey **)&tk);
+    if (status)
+        goto done;
+    rec = fsw_hfsplus_bt_rec_skip_key((HFSPlusBTKey *)tk);
+
+    // did we exhaust all child dnodes of 'd'?
+    if (fsw_u32_be_swap(tk->parentID) != sk.parentID) {
+        status = FSW_NOT_FOUND;
+        goto done;
+    }
+
+    // get child name
+    name.type = FSW_STRING_TYPE_UTF16;
+    name.len = fsw_u16_be_swap(tk->nodeName.length);
+    name.size = name.len * 2;
+    status = fsw_alloc(name.size, &name.data);
+    if (status)
+        goto done;
+    for (i = 0; i < name.len; i++)
+        ((fsw_u16 *)name.data)[i] = fsw_u16_be_swap(tk->nodeName.unicode[i]);
+
+    // figure out type of child dnode:
+    switch (fsw_u16_be_swap(rec->recordType)) {
+    case kHFSPlusFolderRecord:
+        child_dno_id = fsw_u32_be_swap(rec->folderRecord.folderID);
+        child_dno_type = FSW_DNODE_TYPE_DIR;
+        break;
+    case kHFSPlusFileRecord:
+        child_dno_id = fsw_u32_be_swap(rec->fileRecord.fileID);
+        child_dno_type = FSW_DNODE_TYPE_FILE;
+        break;
+    case kHFSPlusFolderThreadRecord:
+DEBUG ((EFI_D_INFO, "GLS: dir_read.3: folder thread: "));
+for (i = 0; i < fsw_u16_be_swap(rec->threadRecord.nodeName.length); i++)
+  DEBUG ((EFI_D_INFO, "%c", fsw_u16_be_swap(rec->threadRecord.nodeName.unicode[i])));
+DEBUG ((EFI_D_INFO, "\n"));
+DEBUG ((EFI_D_INFO, "GLS: OldParentID=%d, NewParentID=%d\n", sk.parentID,
+                    fsw_u32_be_swap(rec->threadRecord.parentID)));
+//        break;
+    default:
+DEBUG ((EFI_D_INFO, "GLS: dir_read.2: recordType=%d\n",
+                    fsw_u16_be_swap(rec->recordType)));
+        child_dno_id = 0;
+        child_dno_type = FSW_DNODE_TYPE_UNKNOWN;
+        break;
+    }
+
+    // allocate child dnode:
+    status = fsw_dnode_create(d, child_dno_id, child_dno_type, &name, d_out);
+    if (status)
+        goto done;
+
+    // done with child name:
+    fsw_strfree(&name);
+
+    // grab additional child dnode status data:
+    switch (child_dno_type) {
+    case FSW_DNODE_TYPE_DIR:
+        (*d_out)->ct = fsw_u32_be_swap(rec->folderRecord.createDate);
+        (*d_out)->mt = fsw_u32_be_swap(rec->folderRecord.contentModDate);
+        (*d_out)->at = fsw_u32_be_swap(rec->folderRecord.accessDate);
+        break;
+    case FSW_DNODE_TYPE_FILE:
+        (*d_out)->g.size =
+            fsw_u64_be_swap(rec->fileRecord.dataFork.logicalSize);
+        fsw_memcpy((*d_out)->extents, &rec->fileRecord.dataFork.extents,
+                   sizeof(HFSPlusExtentRecord));
+        (*d_out)->ct = fsw_u32_be_swap(rec->fileRecord.createDate);
+        (*d_out)->mt = fsw_u32_be_swap(rec->fileRecord.contentModDate);
+        (*d_out)->at = fsw_u32_be_swap(rec->fileRecord.accessDate);
+        break;
+    default:
+        (*d_out)->ct = 0;
+        (*d_out)->mt = 0;
+        (*d_out)->at = 0;
+        break;
+    }
+
+    // advance caller's state to next directory entry:
+    sh->pos++;
+
+done:
+    fsw_free(btnode);
+    return status;
 }
 
 /* Get the target path of a symbolic link. This function is called when a
@@ -560,6 +700,7 @@ fsw_hfsplus_readlink(struct fsw_hfsplus_volume *v, struct fsw_hfsplus_dnode *d,
                      struct fsw_string *lnk_tgt)
 {
     // FIXME: not yet supported!
+DEBUG ((EFI_D_INFO, "GLS: readlink: got here\n"));
     return FSW_UNSUPPORTED;
 }
 
