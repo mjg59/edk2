@@ -41,6 +41,8 @@
 
 #define kHFSPlusFolderRecord       1 // catalog folder record type
 #define kHFSPlusFileRecord         2 // catalog file record type
+#define kHFSPlusFolderThreadRecord 3 // catalog folder thread record type
+#define kHFSPlusFileThreadRecord   4 // catalog file thread record type
 
 #define kBTLeafNode               -1 // B-Tree leaf node type
 #define kBTIndexNode               0 // B-Tree index node type
@@ -156,11 +158,20 @@ typedef struct {
     HFSPlusForkData resourceFork; // info re. size & location of resource fork
 } HFSPlusCatalogFile;
 
+// catalog thread record type
+typedef struct {
+    fsw_s16 recordType;         // should be kHFSPlus[Folder|File]ThreadRecord
+    fsw_u16 reserved;           // reserved field
+    fsw_u32 parentID;           // CNID of this record's parent
+    HFSUniStr255 nodeName;      // basename of file or folder
+} HFSPlusCatalogThread;
+
 // generic (union) catalog record type
 typedef union {
-    fsw_s16              recordType;   // set to kHFSPlus[Folder|File]Record
+    fsw_s16              recordType;   // kHFSPlus[Folder|File][Thread]Record
     HFSPlusCatalogFolder folderRecord; // catalog folder record fields
     HFSPlusCatalogFile   fileRecord;   // catalog file record fields
+    HFSPlusCatalogThread threadRecord; // catalog thread record fields
 } HFSPlusCatalogRecord;
 
 // B-Tree node descriptor found at the start of each node
