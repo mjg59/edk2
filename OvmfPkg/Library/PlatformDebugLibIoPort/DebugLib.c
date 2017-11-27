@@ -27,7 +27,7 @@
 //
 // Define the maximum debug and assert message length that this library supports
 //
-#define MAX_DEBUG_MESSAGE_LENGTH  0x100
+#define MAX_DEBUG_MESSAGE_LENGTH  0x200
 
 /**
   Prints a debug message to the debug output device if the specified error level is enabled.
