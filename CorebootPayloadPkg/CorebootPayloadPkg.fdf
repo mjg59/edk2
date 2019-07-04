@@ -160,6 +160,9 @@ INF MdeModulePkg/Bus/Pci/SataControllerDxe/SataControllerDxe.inf
 INF MdeModulePkg/Bus/Scsi/ScsiBusDxe/ScsiBusDxe.inf
 INF MdeModulePkg/Bus/Scsi/ScsiDiskDxe/ScsiDiskDxe.inf
 
+INF AppleSupportPkg/Platform/ApfsDriverLoader/ApfsDriverLoader.inf
+INF AppleSupportPkg/Platform/VBoxHfs/VBoxHfs.inf
+
 INF FatPkg/EnhancedFatDxe/Fat.inf
 
 !if $(ARCH) == IA32

@@ -21,6 +21,7 @@ Abstract:
 --*/
 
 #include "BdsPlatform.h"
+#include <Library/AppleSupportLib.h>
 
 #define IS_PCI_ISA_PDECODE(_p)        IS_CLASS3 (_p, PCI_CLASS_BRIDGE, PCI_CLASS_BRIDGE_ISA_PDECODE, 0)
 
@@ -406,6 +407,8 @@ Returns:
     (EFI_DEVICE_PATH_PROTOCOL *) &gUsbClassKeyboardDevicePath,
     NULL
     );
+
+  InitializeAppleSupport (gImageHandle, gST);
 }
 
 UINT64
@@ -1286,7 +1289,8 @@ Returns:
   BdsLibEnumerateAllBootOption (BootOptionList);
   PlatformBdsEnterFrontPage (Timeout, FALSE);
   //not run/reached if Timeout = 0xffff
-  
+
+//  BdsBootApple();
   return ;
 
 }

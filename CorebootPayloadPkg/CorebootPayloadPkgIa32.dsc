@@ -451,6 +451,10 @@
   #
   MdeModulePkg/Universal/Acpi/AcpiTableDxe/AcpiTableDxe.inf
 
+  # Apple Support
+  AppleSupportPkg/Platform/ApfsDriverLoader/ApfsDriverLoader.inf
+  AppleSupportPkg/Platform/VBoxHfs/VBoxHfs.inf
+
   #
   # PCI Support
   #
@@ -528,6 +532,7 @@
   FileHandleLib|MdePkg/Library/UefiFileHandleLib/UefiFileHandleLib.inf
   ShellLib|ShellPkg/Library/UefiShellLib/UefiShellLib.inf
   NetLib|MdeModulePkg/Library/DxeNetLib/DxeNetLib.inf
+  AppleSupportLib|AppleSupportPkg/Library/AppleSupportLib/AppleSupportLib.inf
 
 [Components.IA32]
   ShellPkg/DynamicCommand/TftpDynamicCommand/TftpDynamicCommand.inf {

@@ -41,6 +41,7 @@
   CorebootPayloadPkg/CorebootPayloadPkg.dec
 
 [LibraryClasses]
+  AppleSupportLib
   BaseLib
   UefiBootServicesTableLib
   UefiRuntimeServicesTableLib

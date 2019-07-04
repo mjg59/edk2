@@ -39,6 +39,7 @@
   IntelFrameworkModulePkg/IntelFrameworkModulePkg.dec
 
 [LibraryClasses]
+  AppleSupportLib
   BaseLib
   MemoryAllocationLib
   UefiBootServicesTableLib

@@ -236,7 +236,6 @@ PlatformBootManagerAfterConsole (
     L"ENTER           to boot directly.\n"
     L"\n"
   );
-
 }
 
 /**
