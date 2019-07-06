@@ -218,7 +218,7 @@
   Tcg2PhysicalPresenceLib|OvmfPkg/Library/Tcg2PhysicalPresenceLibNull/DxeTcg2PhysicalPresenceLib.inf
 !endif
 
-  AppleSupportLib|OvmfPkg/Library/AppleSupportLib/AppleSupportLib.inf
+  AppleSupportLib|AppleSupportPkg/Library/AppleSupportLib/AppleSupportLib.inf
 
 [LibraryClasses.common]
   BaseCryptLib|CryptoPkg/Library/BaseCryptLib/BaseCryptLib.inf
