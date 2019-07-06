@@ -34,7 +34,7 @@
 [Packages]
   AppleSupportPkg/AppleSupportPkg.dec
   MdePkg/MdePkg.dec
-  EfiPkg/EfiPkg.dec
+  AppleSupportPkg/AppleSupportPkg.dec
   OcSupportPkg/OcSupportPkg.dec
 
 [LibraryClasses]
