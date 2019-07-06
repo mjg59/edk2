@@ -786,7 +786,7 @@
   #
   # Apple HFS+ Support
   #
-  OvmfPkg/FswHfsPlus/FswHfsPlus.inf
+  AppleSupportPkg/Platform/VBoxHfs/VBoxHfs.inf
   IntelFrameworkModulePkg/Universal/DataHubDxe/DataHubDxe.inf
 
   #
