@@ -62,7 +62,7 @@ InitializeFirmware ()
   UINT32              FwFeatures      = 0x80000015;
   UINT32              FwFeaturesMask  = 0x800003ff;
   CHAR8               BootArgs[]      = "-v";
-
+  CHAR8		      CsrActive	      = 0x67;
   Status = gRT->SetVariable(L"BackgroundClear",
                             &gAppleFirmwareVariableGuid,
                             EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
@@ -82,6 +82,11 @@ InitializeFirmware ()
                             &gAppleNVRAMVariableGuid,
                             EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
                             sizeof(BootArgs), &BootArgs);
+
+  Status = gRT->SetVariable(L"csr-active-config",
+			    &gAppleNVRAMVariableGuid,
+			    EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
+			    sizeof(CsrActive), &CsrActive);
 
   return Status;
 }
