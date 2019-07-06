@@ -219,6 +219,27 @@
 !endif
 
   AppleSupportLib|AppleSupportPkg/Library/AppleSupportLib/AppleSupportLib.inf
+  OcAppleImageVerificationLib|OcSupportPkg/Library/OcAppleImageVerificationLib/OcAppleImageVerificationLib.inf
+  OcAppleKeysLib|OcSupportPkg/Library/OcAppleKeysLib/OcAppleKeysLib.inf
+  OcCryptoLib|OcSupportPkg/Library/OcCryptoLib/OcCryptoLib.inf
+  OcFileLib|OcSupportPkg/Library/OcFileLib/OcFileLib.inf
+  OcGuardLib|OcSupportPkg/Library/OcGuardLib/OcGuardLib.inf
+  OcPngLib|OcSupportPkg/Library/OcPngLib/OcPngLib.inf
+  OcRtcLib|OcSupportPkg/Library/OcRtcLib/OcRtcLib.inf
+  OcTimerLib|OcSupportPkg/Library/OcTimerLib/OcTimerLib.inf
+  OcMiscLib|OcSupportPkg/Library/OcMiscLib/OcMiscLib.inf
+  OcAppleBootPolicyLib|OcSupportPkg/Library/OcAppleBootPolicyLib/OcAppleBootPolicyLib.inf
+  OcAppleChunklistLib|OcSupportPkg/Library/OcAppleChunklistLib/OcAppleChunklistLib.inf
+  OcAppleDiskImageLib|OcSupportPkg/Library/OcAppleDiskImageLib/OcAppleDiskImageLib.inf
+  OcAppleRamDiskLib|OcSupportPkg/Library/OcAppleRamDiskLib/OcAppleRamDiskLib.inf
+  OcBootManagementLib|OcSupportPkg/Library/OcBootManagementLib/OcBootManagementLib.inf
+  OcCompressionLib|OcSupportPkg/Library/OcCompressionLib/OcCompressionLib.inf
+  OcDataHubLib|OcSupportPkg/Library/OcDataHubLib/OcDataHubLib.inf
+  OcDevicePathLib|OcSupportPkg/Library/OcDevicePathLib/OcDevicePathLib.inf
+  OcDevicePropertyLib|OcSupportPkg/Library/OcDevicePropertyLib/OcDevicePropertyLib.inf
+  OcStringLib|OcSupportPkg/Library/OcStringLib/OcStringLib.inf
+  OcXmlLib|OcSupportPkg/Library/OcXmlLib/OcXmlLib.inf
+  
 
 [LibraryClasses.common]
   BaseCryptLib|CryptoPkg/Library/BaseCryptLib/BaseCryptLib.inf
@@ -782,8 +803,9 @@
   MdeModulePkg/Universal/Acpi/BootGraphicsResourceTableDxe/BootGraphicsResourceTableDxe.inf
 
   #
-  # Apple HFS+ Support
+  # Apple Support
   #
+  AppleSupportPkg/Platform/ApfsDriverLoader/ApfsDriverLoader.inf
   AppleSupportPkg/Platform/VBoxHfs/VBoxHfs.inf
   IntelFrameworkModulePkg/Universal/DataHubDxe/DataHubDxe.inf
 
