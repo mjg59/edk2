@@ -40,7 +40,7 @@
   hfs_unistr.h
 
 [Packages]
-  EfiPkg/EfiPkg.dec
+  AppleSupportPkg/AppleSupportPkg.dec
   MdePkg/MdePkg.dec
 
 [LibraryClasses]
