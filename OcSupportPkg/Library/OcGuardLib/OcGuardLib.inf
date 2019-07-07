@@ -48,3 +48,8 @@
   XCODE:DEBUG_*_*_CC_FLAGS   = -fno-stack-protector
   XCODE:NOOPT_*_*_CC_FLAGS   = -fno-stack-protector
   XCODE:RELEASE_*_*_CC_FLAGS = -fno-stack-protector
+  GCC:*_*_IA32_CC_FLAGS    = -Wno-error=maybe-uninitialized
+  GCC:*_*_X64_CC_FLAGS     = -Wno-error=maybe-uninitialized
+  GCC:*_*_ARM_CC_FLAGS     = -Wno-error=maybe-uninitialized
+  GCC:*_*_AARCH64_CC_FLAGS = -Wno-error=maybe-uninitialized
+

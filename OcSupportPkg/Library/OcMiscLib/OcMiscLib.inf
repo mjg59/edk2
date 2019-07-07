@@ -62,3 +62,9 @@
   ReleaseUsbOwnership.c
   NullTextOutput.c
   UninstallAllProtocolInterfaces.c
+[BuildOptions]
+  GCC:*_*_IA32_CC_FLAGS    = -Wno-error=maybe-uninitialized
+  GCC:*_*_X64_CC_FLAGS     = -Wno-error=maybe-uninitialized
+  GCC:*_*_ARM_CC_FLAGS     = -Wno-error=maybe-uninitialized
+  GCC:*_*_AARCH64_CC_FLAGS = -Wno-error=maybe-uninitialized
+
