@@ -62,7 +62,9 @@ InitializeFirmware ()
   UINT32              FwFeatures      = 0x80000015;
   UINT32              FwFeaturesMask  = 0x800003ff;
   CHAR8               BootArgs[]      = "-v";
-  CHAR8		      CsrActive	      = 0x67;
+  CHAR8               CsrActive       = 0x67;
+  UINTN               DataSize;
+
   Status = gRT->SetVariable(L"BackgroundClear",
                             &gAppleFirmwareVariableGuid,
                             EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
@@ -78,15 +80,27 @@ InitializeFirmware ()
                             EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
                             sizeof(FwFeaturesMask), &FwFeaturesMask);
 
-  Status = gRT->SetVariable(L"boot-args",
-                            &gAppleNVRAMVariableGuid,
-                            EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
-                            sizeof(BootArgs), &BootArgs);
-
-  Status = gRT->SetVariable(L"csr-active-config",
+  DataSize = 0;
+  Status = gRT->GetVariable(L"boot-args",
 			    &gAppleNVRAMVariableGuid,
-			    EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
-			    sizeof(CsrActive), &CsrActive);
+			    NULL, &DataSize, NULL);
+  if (Status != EFI_BUFFER_TOO_SMALL) {
+	  Status = gRT->SetVariable(L"boot-args",
+				    &gAppleNVRAMVariableGuid,
+				    EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
+				    sizeof(BootArgs), &BootArgs);
+  }
+
+  DataSize = 0;
+  Status = gRT->GetVariable(L"csr-active-config",
+			    &gAppleNVRAMVariableGuid,
+			    NULL, &DataSize, NULL);
+  if (Status != EFI_BUFFER_TOO_SMALL) {
+	  Status = gRT->SetVariable(L"csr-active-config",
+				    &gAppleNVRAMVariableGuid,
+				    EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
+				    sizeof(CsrActive), &CsrActive);
+  }
 
   return Status;
 }
