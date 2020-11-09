@@ -175,8 +175,18 @@ GetDeviceNameFromProduct (
   } else if (!StrCmp(Product, L"Wolf")) {
     StrCatS (*DeviceName, 0x60 / sizeof (CHAR16), L"Dell Chromebook 11 2013");
   } else if (!StrCmp(Product, L"Wukong")) {
-    StrCatS (*DeviceName, 0x60 / sizeof (CHAR16), L"CTL Chromebox CBX1");
+    StrCatS (*DeviceName, 0x60 / sizeof (CHAR16), L"CTL Chromebox CBx1");
   } else if (!StrCmp(Product, L"Zako")) {
     StrCatS (*DeviceName, 0x60 / sizeof (CHAR16), L"HP Chromebox CB1");
-  } 
+  } else if (!StrCmp(Product, L"Drallion")) {
+    StrCatS (*DeviceName, 0x60 / sizeof (CHAR16), L"Dell Latitude 7410 Chromebook Enterprise");
+  } else if (!StrCmp(Product, L"Noibat")) {
+    StrCatS (*DeviceName, 0x60 / sizeof (CHAR16), L"HP Chromebox G3");
+  } else if (!StrCmp(Product, L"Duffy")) {
+    StrCatS (*DeviceName, 0x60 / sizeof (CHAR16), L"ASUS Chromebox 4");
+  } else if (!StrCmp(Product, L"Kaisa")) {
+    StrCatS (*DeviceName, 0x60 / sizeof (CHAR16), L"Acer Chromebox CXI4");
+  } else if (!StrCmp(Product, L"Wyvern")) {
+    StrCatS (*DeviceName, 0x60 / sizeof (CHAR16), L"CTL Chromebox CBx2");
+  }
 }
