@@ -303,7 +303,7 @@ BlSMMSTOREInitialise (
         SMMStoreInfoHob->NumBlocks * SMMStoreInfoHob->BlockSize,
         EFI_MEMORY_UC | EFI_MEMORY_RUNTIME
         );
-    ASSERT_EFI_ERROR (Status);
+    //ASSERT_EFI_ERROR (Status);
   }
 
   //
