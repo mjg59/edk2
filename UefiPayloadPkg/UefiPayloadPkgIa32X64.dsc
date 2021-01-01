@@ -527,7 +527,7 @@
   #
   # ISA Support
   #
-  MdeModulePkg/Universal/SerialDxe/SerialDxe.inf
+#  MdeModulePkg/Universal/SerialDxe/SerialDxe.inf
 !if $(PS2_KEYBOARD_ENABLE) == TRUE
   OvmfPkg/SioBusDxe/SioBusDxe.inf
   MdeModulePkg/Bus/Isa/Ps2KeyboardDxe/Ps2KeyboardDxe.inf
