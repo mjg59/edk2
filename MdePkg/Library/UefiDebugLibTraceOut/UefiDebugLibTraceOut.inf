@@ -1,0 +1,55 @@
+## @file
+#  Instance of Debug Library using Intel Trace Hub
+#
+#  Debug Lib that sends messages to the Intel Trace Hub
+#
+#  Copyright (c) 2007 - 2018, Intel Corporation. All rights reserved.<BR>
+#
+#  This program and the accompanying materials
+#  are licensed and made available under the terms and conditions of the BSD License
+#  which accompanies this distribution. The full text of the license may be found at
+#  http://opensource.org/licenses/bsd-license.php.
+#  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = UefiDebugLibTraceOut
+  MODULE_UNI_FILE                = UefiDebugLibTraceOut.uni
+  FILE_GUID                      = b9669a7c-2ae0-4957-add1-c02908e76ca3
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = DebugLib
+  CONSTRUCTOR			 = UefiDebugLibTraceOutConstructor
+
+
+#
+#  VALID_ARCHITECTURES           = IA32 X64 EBC
+#
+
+
+[Sources]
+  DebugLib.c
+
+
+
+[Packages]
+  MdePkg/MdePkg.dec
+
+
+[LibraryClasses]
+  BaseMemoryLib
+  BaseLib
+  IoLib
+  PcdLib
+  PrintLib
+  DebugPrintErrorLevelLib
+
+[Pcd]
+  gEfiMdePkgTokenSpaceGuid.PcdDebugClearMemoryValue        ## SOMETIMES_CONSUMES
+  gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask            ## CONSUMES
+  gEfiMdePkgTokenSpaceGuid.PcdFixedDebugPrintErrorLevel    ## CONSUMES
+
